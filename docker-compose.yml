@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. Backend Service (Node/Express/TS)
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+      target: development
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: 5432
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app/backend
+      - /app/backend/node_modules
+    command: pnpm --filter backend run dev
+
+  # 3. Frontend Service (React/Vite/TS)
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      VITE_BACKEND_URL: http://localhost:5000/api 
+    depends_on:
+      - backend
+    # CRITICAL FIX: Mount the local 'frontend' dir directly to the container's root WORKDIR /app
+    volumes:
+      - ./frontend:/app 
+      - /app/node_modules # Keep node_modules separate
+    # CRITICAL FIX: Change command to reflect running from the /app root
+    command: pnpm run dev 
+
+volumes:
+  postgres_data:
