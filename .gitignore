@@ -1,0 +1,18 @@
+# Dependency directories
+node_modules/
+*/node_modules/*
+*/*/node_modules/*
+
+# Or more specifically:
+backend/node_modules/
+frontend/node_modules/
+
+# Also ignore other auto-generated files
+.yarn/
+.pnp.*
+dist/
+build/
+.env
+.env.local
+.DS_Store
+*.log
